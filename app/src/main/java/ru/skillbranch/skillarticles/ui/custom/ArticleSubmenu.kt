@@ -31,6 +31,10 @@ class ArticleSubmenu @JvmOverloads constructor(
         background = materialBg
     }
 
+    fun toggle() {
+        if (isOpen) close() else open()
+    }
+
     fun open() {
         if (isOpen || !isAttachedToWindow) return
         isOpen = true

@@ -3,7 +3,16 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Android/PROJ/SkillArticles/app/src/main/res/drawable/bookmark_states.xml" value="0.236" />
+        <entry key="..\:/Android/PROJ/SkillArticles/app/src/main/res/drawable/ic_bookmark_black_24dp.xml" value="0.236" />
+        <entry key="..\:/Android/PROJ/SkillArticles/app/src/main/res/drawable/ic_bookmark_border_black_24dp.xml" value="0.236" />
+        <entry key="..\:/Android/PROJ/SkillArticles/app/src/main/res/drawable/ic_favorite_border_black_24dp.xml" value="0.236" />
+        <entry key="..\:/Android/PROJ/SkillArticles/app/src/main/res/drawable/like_states.xml" value="0.236" />
+        <entry key="..\:/Android/PROJ/SkillArticles/app/src/main/res/drawable/logo_placeholder.xml" value="0.236" />
+        <entry key="..\:/Android/PROJ/SkillArticles/app/src/main/res/drawable/ripple.xml" value="0.236" />
+        <entry key="..\:/Android/PROJ/SkillArticles/app/src/main/res/layout/activity_root.xml" value="0.35260416666666666" />
         <entry key="..\:/Android/PROJ/SkillArticles/app/src/main/res/layout/layout_bottombar.xml" value="0.36666666666666664" />
+        <entry key="..\:/Android/PROJ/SkillArticles/app/src/main/res/layout/layout_submenu.xml" value="0.36102564102564105" />
       </map>
     </option>
   </component>

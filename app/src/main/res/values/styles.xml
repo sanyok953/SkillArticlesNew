@@ -8,16 +8,16 @@
         <item name="android:statusBarColor">@color/color_primary_dark</item>
 
         <item name="android:textColorSecondary">@color/color_accent</item>
-        <item name="colorPrimary">@color/color_primary</item>
-        <item name="colorPrimaryVariant">@color/color_primary_dark</item>
-        <item name="colorOnPrimary">@android:color/white</item>
-        <item name="colorSecondary">@color/color_accent</item>
-        <item name="colorSecondaryVariant">@color/color_accent_dark</item>
-        <item name="colorOnSecondary">@android:color/white</item>
+        <item name="colorPrimary">@color/color_primary</item> <!-- Основной цвет -->
+        <item name="colorPrimaryVariant">@color/color_primary_dark</item> <!-- Цвет который наклвдывается на цвет статус бара -->
+        <item name="colorOnPrimary">@android:color/white</item> <!-- На всех тех поверхностях которые имеют colorPrimary будет писаться текст этим цветом -->
+        <item name="colorSecondary">@color/color_accent</item> <!-- Стал цвет акцента -->
+        <item name="colorSecondaryVariant">@color/color_accent_dark</item> <!-- Более тёмный цвет акцента -->
+        <item name="colorOnSecondary">@android:color/white</item> <!-- Текстовые поля на цвете акцента -->
         <item name="colorError">#F44336</item>
         <item name="colorOnError">#FFFFFF</item>
-        <item name="colorSurface">@color/color_surface</item>
-        <item name="colorOnSurface">@color/color_on_surface</item>
+        <item name="colorSurface">@color/color_surface</item> <!-- Цвет поверхности -->
+        <item name="colorOnSurface">@color/color_on_surface</item> <!-- Текст на цвете поверхности? -->
 
         <item name="snackbarStyle">@style/CustomSnackbar</item>
     </style>
@@ -25,20 +25,20 @@
     <style name="ArticleBarsTheme" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
         <item name="colorPrimary">@color/color_article_bar</item>
         <item name="colorOnPrimary">@color/color_on_article_bar</item>
-        <item name="colorSurface">@color/color_article_bar</item>
+        <item name="colorSurface">@color/color_article_bar</item> <!-- Фон -->
         <item name="colorControlNormal">@color/color_on_article_bar</item>
     </style>
 
     <style name="ArticleToolbar" parent="Widget.MaterialComponents.Toolbar.Primary">
         <item name="titleTextColor">?attr/colorOnPrimary</item>
-        <item name="contentInsetStartWithNavigation">0dp</item>
+        <item name="contentInsetStartWithNavigation">@dimen/spacing_zero_0</item>
     </style>
 
 
     <style name="BottombarIcon">
-        <item name="android:layout_width">56dp</item>
-        <item name="android:layout_height">56dp</item>
-        <item name="android:padding">16dp</item>
+        <item name="android:layout_width">@dimen/bottom_bar_icon_size_56</item>
+        <item name="android:layout_height">@dimen/bottom_bar_icon_size_56</item>
+        <item name="android:padding">@dimen/spacing_normal_16</item>
         <item name="android:tint">@color/tint_color</item>
         <item name="android:background">@drawable/ripple</item>
     </style>
