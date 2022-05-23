@@ -2,14 +2,13 @@ package ru.skillbranch.skillarticles.viewmodels
 
 import android.util.Log
 import androidx.lifecycle.LiveData
-import ru.skillbranch.skillarticles.data.AppSettings
+import androidx.lifecycle.MutableLiveData
 import ru.skillbranch.skillarticles.data.ArticleData
 import ru.skillbranch.skillarticles.data.ArticlePersonalInfo
 import ru.skillbranch.skillarticles.data.repositories.ArticleRepository
 import ru.skillbranch.skillarticles.extensions.data.toAppSettings
 import ru.skillbranch.skillarticles.extensions.data.toArticlePersonalInfo
 import ru.skillbranch.skillarticles.extensions.format
-import ru.skillbranch.skillarticles.extensions.mutableLiveData
 
 class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleState>(ArticleState()), IArticleViewModel {
 
@@ -35,7 +34,7 @@ class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleSta
             )
         }
 
-        subscribeOnDataSource(queryString) { query, state ->
+        /*subscribeOnDataSource(queryString) { query, state ->
             query ?: return@subscribeOnDataSource null
             state.copy(
                 searchQuery = query
@@ -47,7 +46,7 @@ class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleSta
             state.copy(
                 isSearch = search
             )
-        }
+        }*/
 
         subscribeOnDataSource(getArticleContent()) { content, state ->
             content ?: return@subscribeOnDataSource null
@@ -117,14 +116,13 @@ class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleSta
     }
 
     override fun handleSearchMode(isSearch: Boolean) {
-        Log.d("M_ArticleViewModel", "handleSearchMode $isSearch")
-        searchMode.value = isSearch
+        //searchMode.value = isSearch
+        updateState { it.copy(isSearch = isSearch) }
     }
 
     override fun handleSearch(query: String?) {
-        Log.d("M_ArticleViewModel", "handleSearch $query")
-        queryString.value = query
-
+        //queryString.value = query
+        updateState { it.copy(searchQuery = query) }
     }
 
     override fun handleUpText() {
@@ -167,3 +165,12 @@ data class ArticleState(
     val content: List<Any> = emptyList(), // Контент
     val reviews: List<Any> = emptyList() // Комментарий
 )
+
+fun <T> mutableLiveData(defaultValue: T? = null): MutableLiveData<T> {
+    val data = MutableLiveData<T>()
+
+    if (defaultValue != null)
+        data.value = defaultValue
+
+    return data
+}
