@@ -1,5 +1,6 @@
 package ru.skillbranch.skillarticles.viewmodels
 
+import android.util.Log
 import androidx.annotation.UiThread
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.*
@@ -42,7 +43,7 @@ abstract class BaseViewModel<T>(initState: T) : ViewModel() {
      * повторно
      */
     @UiThread
-    protected fun notify(content: Notify) {
+    protected fun notify(content: Notify) { // В метод передаём необходимый на sealed класс который нужно отобразить в наше вью
         notifications.value = Event(content)
     }
 
@@ -59,6 +60,7 @@ abstract class BaseViewModel<T>(initState: T) : ViewModel() {
      * только в том случае если уведомление не было уже обработанно ранее,
      * реализует данное поведение с помощью EventObserver
      */
+    // Похож на observeState он будет предназначен для нотификаций в методе observe использует не observer а наш EventObserver
     fun observeNotifications(owner: LifecycleOwner, onNotify: (notification: Notify) -> Unit) {
         notifications.observe(owner, EventObserver { onNotify(it) })
     }
@@ -69,32 +71,34 @@ abstract class BaseViewModel<T>(initState: T) : ViewModel() {
      * изменяет его и возвращает модифицированное состояние, которое устанавливается как текущее
      */
     protected fun <S> subscribeOnDataSource(
-        source: LiveData<S>,
-        onChanged: (newValue: S, currentState: T) -> T?
+        source: LiveData<S>, // Данные за которыми потом будем следить
+        onChanged: (newValue: S, currentState: T) -> T? // Лямбда
     ) {
         state.addSource(source) {
+            // MediatorLiveData Добавляет источник этим методом за которым будет следить и при изменении любого добавленного уведомит подписчика...
             state.value = onChanged(it, currentState) ?: return@addSource
         }
     }
 
 }
 
-//class ViewModelFactory(private val params: String) : ViewModelProvider.Factory {
-//    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-//        if (modelClass.isAssignableFrom(ArticleViewModel::class.java)) {
-//            return ArticleViewModel(params) as T
-//        }
-//        throw IllegalArgumentException("Unknown ViewModel class")
-//    }
-//}
+class ViewModelFactory(private val params: String) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ArticleViewModel::class.java)) {
+            return ArticleViewModel(params) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
 
+//
 class Event<out E>(private val content: E) {
-    var hasBeenHandled = false
+    var hasBeenHandled = false // Был обработан контент
 
     /***
      * возвращает контент который еще не был обработан иначе null
      */
-    fun getContentIfNotHandled(): E? {
+    fun getContentIfNotHandled(): E? { // Вернуть из евента контент который не был обработан или налл
         return if (hasBeenHandled) null
         else {
             hasBeenHandled = true
@@ -109,25 +113,29 @@ class Event<out E>(private val content: E) {
  * в качестве аргумента конструктора принимает лямбда выражение обработчик в аргумент которой передается
  * необработанное ранее событие получаемое в реализации метода Observer`a onChanged
  */
-class EventObserver<E>(private val onEventUnhandledContent: (E) -> Unit) : Observer<Event<E>> {
+// Работает как обыкновенный обсёрвер только в качестве данных которые он обрабатывает использует не просто объекты а наши евент объекты
+
+class EventObserver<E>(private val onEventUnhandledContent: (E) -> Unit) : Observer<Event<E>> { // Обёртка над Observer
 
     override fun onChanged(event: Event<E>?) {
         //если есть необработанное событие (контент) передай в качестве аргумента в лямбду
-        // onEventUnhandledContent
+        // onEventUnhandledContent возвращает либо тот контент который внутри себя либо налл
         event?.getContentIfNotHandled()?.let {
             onEventUnhandledContent(it)
         }
     }
 }
 
-sealed class Notify(val message: String) {
-    data class TextMessage(val msg: String) : Notify(msg)
+//
+sealed class Notify(val message: String) { // sealed похожи на енамы только с отличием что sealed могут сохранить внутри себя какое то состояние (могут хранить экземпляры)
+    // удобно перебирать в when конструкции потому что можем там провериять через is каким подтипом sealed класса является тот или иной класс
+    data class TextMessage(val msg: String) : Notify(msg) // Дата класс может наследоваться если он является сабклассом сеалед класса (показываем как текст в снекбаре)
 
-    data class ActionMessage(
+    data class ActionMessage( // Будет в себе содержать текст сообщени, actionLabel и лямбда выражение обработчик (функция которая будет вызвана когда нажмём на кнопку которая в снекбаре)
         val msg: String,
         val actionLabel: String,
         val actionHandler: (() -> Unit)
-    ) : Notify(msg)
+    ) : Notify(msg) // Дата класс наследуется от Notify
 
     data class ErrorMessage(
         val msg: String,

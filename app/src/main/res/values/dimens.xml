@@ -13,7 +13,7 @@
     <dimen name="spacing_zero_0">0dp</dimen>
 
     <dimen name="size_image_button">24dp</dimen>
-    <dimen name="btn_round_size_48">40dp</dimen>
+    <dimen name="btn_round_size_40">40dp</dimen>
     <dimen name="bottom_bar_icon_size_56">56dp</dimen>
     <dimen name="avatar_round_size">112dp</dimen>
 </resources>

@@ -3,7 +3,7 @@ package ru.skillbranch.skillarticles.data.repositories
 import androidx.lifecycle.LiveData
 import ru.skillbranch.skillarticles.data.*
 
-object ArticleRepository {
+object ArticleRepository { // Singleton
     private val local = LocalDataHolder
     private val network = NetworkDataHolder
 

@@ -47,6 +47,7 @@
         android:layout_marginRight="@dimen/spacing_small_8"
         android:layout_marginBottom="@dimen/spacing_small_8"
         app:layout_dodgeInsetEdges="bottom"
+        app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior"
         android:visibility="gone"
         tools:visibility="visible"/>
 
@@ -56,6 +57,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:elevation="4dp"
+        app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior"
         app:layout_insetEdge="bottom"/>
     <!-- insetEdge грань вставки значит то что все те вьи которые будут иметь
     dodgeInsetEdges bottom они не могут занимать место которое занимает bottombar
