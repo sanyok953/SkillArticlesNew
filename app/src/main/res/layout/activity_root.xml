@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:logo="@drawable/logo_placeholder"
-            app:title="@string/text_app_name"
+            app:title="@string/app_name"
             app:subtitle="@string/text_loading"
             app:layout_scrollFlags="scroll|enterAlwaysCollapsed"
             android:elevation="@dimen/spacing_tiny_4"/>

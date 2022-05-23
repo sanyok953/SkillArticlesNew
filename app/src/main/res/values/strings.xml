@@ -1,5 +1,5 @@
 <resources>
-    <string name="text_app_name">Skill Articles</string>
+    <string name="app_name">Skill Articles</string>
     <string name="text_loading">Loading...</string>
     <string name="text_dark_mode">Темный режим</string>
     <string name="menu_seach_title">Поиск</string>
