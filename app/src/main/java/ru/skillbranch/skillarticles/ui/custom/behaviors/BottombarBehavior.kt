@@ -8,7 +8,7 @@ import androidx.core.view.ViewCompat
 import kotlin.math.max
 import kotlin.math.min
 
-class BottonbarBehavior<V : View>(context: Context, attrs: AttributeSet) :
+class BottombarBehavior<V : View>(context: Context, attrs: AttributeSet) :
     CoordinatorLayout.Behavior<V>(context, attrs) {
 
     private var height: Float = 0f

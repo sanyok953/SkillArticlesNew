@@ -57,7 +57,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:elevation="4dp"
-        app:layout_behavior=".ui.custom.behaviors.BottonbarBehavior"
+        app:layout_behavior=".ui.custom.behaviors.BottombarBehavior"
         app:layout_insetEdge="bottom"/>
     <!-- insetEdge грань вставки значит то что все те вьи которые будут иметь
     dodgeInsetEdges bottom они не могут занимать место которое занимает bottombar
