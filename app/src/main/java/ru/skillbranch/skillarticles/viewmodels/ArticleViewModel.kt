@@ -9,7 +9,8 @@ import ru.skillbranch.skillarticles.extensions.data.toAppSettings
 import ru.skillbranch.skillarticles.extensions.data.toArticlePersonalInfo
 import ru.skillbranch.skillarticles.extensions.format
 
-class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleState>(ArticleState()), IArticleViewModel {
+class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleState>(ArticleState()),
+    IArticleViewModel {
 
     private val repository = ArticleRepository
     private val queryString = mutableLiveData("")
@@ -29,7 +30,9 @@ class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleSta
                 title = article.title,
                 category = article.category,
                 categoryIcon = article.categoryIcon,
-                date = article.date.format()
+                date = article.date.format(),
+                author = article.author,
+                poster = article.poster
             )
         }
 
@@ -92,7 +95,7 @@ class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleSta
 
         val msg = if (currentState.isLike) Notify.TextMessage("Mark is liked")
         else {
-            Notify.ActionMessage (
+            Notify.ActionMessage(
                 "Don`t like it anymore",
                 "No, still like it",
                 toggleLike
@@ -102,7 +105,7 @@ class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleSta
     }
 
     override fun handleBookmark() {
-
+        updateState { it.copy(isBookmark = !it.isBookmark) }
     }
 
     override fun handleShare() {
