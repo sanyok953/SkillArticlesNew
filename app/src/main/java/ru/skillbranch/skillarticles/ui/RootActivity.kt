@@ -7,14 +7,12 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ImageView
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
-import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.activity_root.*
-import kotlinx.android.synthetic.main.layout_bottombar.*
-import kotlinx.android.synthetic.main.layout_submenu.*
 import ru.skillbranch.skillarticles.R
+import ru.skillbranch.skillarticles.databinding.ActivityRootBinding
 import ru.skillbranch.skillarticles.extensions.dpToIntPx
 import ru.skillbranch.skillarticles.viewmodels.ArticleState
 import ru.skillbranch.skillarticles.viewmodels.ArticleViewModel
@@ -23,18 +21,26 @@ import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
 
 class RootActivity : AppCompatActivity() {
 
-    private lateinit var viewModel: ArticleViewModel
+    //private lateinit var viewModel: ArticleViewModel
+    private val viewModel: ArticleViewModel by viewModels { ViewModelFactory("0") }
+    private lateinit var vb: ActivityRootBinding
+    private val vbBottombar
+        get() = vb.bottombar.binding
+    private val vbSubmenu
+        get() = vb.submenu.binding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_root)
+        vb = ActivityRootBinding.inflate(layoutInflater)
+        setContentView(vb.root)
 
         setupToolbar()
         setupBottombar()
         setupSubmenu()
 
-        val vmFactory = ViewModelFactory("0")
-        viewModel = ViewModelProvider(this, vmFactory).get(ArticleViewModel::class.java)
+        //val vmFactory = ViewModelFactory("0")
+        //viewModel = ViewModelProvider(this, vmFactory).get(ArticleViewModel::class.java)
+
 
         // Подписывается на данные нашей Вьюмодели
         viewModel.observeState(this) { // Функция предоставляет более короткую запись
@@ -48,18 +54,23 @@ class RootActivity : AppCompatActivity() {
 
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_search, menu)
-        val searchItem = menu?.findItem(R.id.action_search)
+        val searchItem = menu.findItem(R.id.action_search)
         val searchView = searchItem?.actionView as SearchView
 
-        if (viewModel.currentState.isSearch) menu.findItem(R.id.action_search).expandActionView()
-        with (searchView) {
-            viewModel.currentState.searchQuery?.let { setQuery(it, false) }
+        if (viewModel.currentState.isSearch) {
+            searchItem.expandActionView()
+            searchView.setQuery(viewModel.currentState.searchQuery, false)
+            searchView.requestFocus()
+        } else searchView.clearFocus()
+
+        with(searchView) {
+            //viewModel.currentState.searchQuery?.let { setQuery(it, false) }
 
             queryHint = "Введите слово для поиска"
 
-            setOnQueryTextListener(object: SearchView.OnQueryTextListener {
+            setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(query: String): Boolean {
                     viewModel.handleSearch(query)
                     return true
@@ -90,8 +101,8 @@ class RootActivity : AppCompatActivity() {
     }
 
     private fun renderNotification(notify: Notify) {
-        val snackbar = Snackbar.make(coordinator_container, notify.message, Snackbar.LENGTH_LONG)
-            .setAnchorView(bottombar)
+        val snackbar = Snackbar.make(vb.coordinatorContainer, notify.message, Snackbar.LENGTH_LONG)
+            .setAnchorView(vb.bottombar)
 
         when (notify) { // Перебираем наши sealed классы
             is Notify.TextMessage -> {
@@ -123,40 +134,40 @@ class RootActivity : AppCompatActivity() {
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private fun renderUI(data: ArticleState) {
-        btn_settings.isChecked = data.isShowMenu
-        if (data.isShowMenu) submenu.open() else submenu.close()
+        vbBottombar.btnSettings.isChecked = data.isShowMenu
+        if (data.isShowMenu) vb.submenu.open() else vb.submenu.close()
 
-        btn_like.isChecked = data.isLike
-        btn_bookmark.isChecked = data.isBookmark
-        switch_mode.isChecked = data.isDarkMode
+        vbBottombar.btnLike.isChecked = data.isLike
+        vbBottombar.btnBookmark.isChecked = data.isBookmark
+        vbSubmenu.switchMode.isChecked = data.isDarkMode
         delegate.localNightMode =
             if (data.isDarkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
         if (data.isBigText) {
-            tv_text_content.textSize = 18f
-            btn_text_up.isChecked = true
-            btn_text_down.isChecked = false
+            vb.tvTextContent.textSize = 18f
+            vbSubmenu.btnTextUp.isChecked = true
+            vbSubmenu.btnTextDown.isChecked = false
         } else {
-            tv_text_content.textSize = 14f
-            btn_text_up.isChecked = false
-            btn_text_down.isChecked = true
+            vb.tvTextContent.textSize = 14f
+            vbSubmenu.btnTextUp.isChecked = false
+            vbSubmenu.btnTextDown.isChecked = true
         }
 
-        tv_text_content.text =
+        vb.tvTextContent.text =
             if (data.isLoadingContent) "Loading..." else data.content.first() as String
-        toolbar.title = data.title ?: "Loading..."
-        toolbar.subtitle = data.category ?: "Loading..."
+        vb.toolbar.title = data.title ?: "Loading..."
+        vb.toolbar.subtitle = data.category ?: "Loading..."
         data.categoryIcon?.let {
-            toolbar.logo = getDrawable(it as Int)
+            vb.toolbar.logo = getDrawable(it as Int)
 
         }
 
     }
 
     private fun setupToolbar() {
-        setSupportActionBar(toolbar)
+        setSupportActionBar(vb.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true) // Кнопка назад на тулбаре
         val logo =
-            if (toolbar.childCount > 2) toolbar.getChildAt(2) as ImageView else null // Иконка по индексом 2
+            if (vb.toolbar.childCount > 2) vb.toolbar.getChildAt(2) as ImageView else null // Иконка по индексом 2
         //logo?.scaleType = ImageView.ScaleType.CENTER_CROP
         logo?.let {
             it.scaleType = ImageView.ScaleType.CENTER_CROP
@@ -172,15 +183,15 @@ class RootActivity : AppCompatActivity() {
     }
 
     private fun setupBottombar() {
-        btn_like.setOnClickListener { viewModel.handleLike() }
-        btn_bookmark.setOnClickListener { viewModel.handleBookmark() }
-        btn_share.setOnClickListener { viewModel.handleShare() }
-        btn_settings.setOnClickListener { viewModel.handleToggleMenu() }
+        vbBottombar.btnLike.setOnClickListener { viewModel.handleLike() }
+        vbBottombar.btnBookmark.setOnClickListener { viewModel.handleBookmark() }
+        vbBottombar.btnShare.setOnClickListener { viewModel.handleShare() }
+        vbBottombar.btnSettings.setOnClickListener { viewModel.handleToggleMenu() }
     }
 
     private fun setupSubmenu() {
-        btn_text_up.setOnClickListener { viewModel.handleUpText() }
-        btn_text_down.setOnClickListener { viewModel.handleDownText() }
-        switch_mode.setOnClickListener { viewModel.handleNightMode() }
+        vbSubmenu.btnTextUp.setOnClickListener { viewModel.handleUpText() }
+        vbSubmenu.btnTextDown.setOnClickListener { viewModel.handleDownText() }
+        vbSubmenu.switchMode.setOnClickListener { viewModel.handleNightMode() }
     }
 }
