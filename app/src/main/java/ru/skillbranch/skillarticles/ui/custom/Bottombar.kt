@@ -16,7 +16,7 @@ class Bottombar @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : ConstraintLayout(context, attrs, defStyleAttr), CoordinatorLayout.AttachedBehavior {
-
+    var isSearchMode = false
     val binding: LayoutBottombarBinding
 
     override fun getBehavior(): CoordinatorLayout.Behavior<Bottombar> {

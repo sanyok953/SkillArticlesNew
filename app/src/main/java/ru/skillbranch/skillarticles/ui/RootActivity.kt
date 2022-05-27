@@ -14,16 +14,16 @@ import com.google.android.material.snackbar.Snackbar
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.databinding.ActivityRootBinding
 import ru.skillbranch.skillarticles.extensions.dpToIntPx
+import ru.skillbranch.skillarticles.ui.delegates.viewBinding
 import ru.skillbranch.skillarticles.viewmodels.ArticleState
 import ru.skillbranch.skillarticles.viewmodels.ArticleViewModel
 import ru.skillbranch.skillarticles.viewmodels.Notify
 import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
 
 class RootActivity : AppCompatActivity() {
-
     //private lateinit var viewModel: ArticleViewModel
     private val viewModel: ArticleViewModel by viewModels { ViewModelFactory("0") }
-    private lateinit var vb: ActivityRootBinding
+    private val vb: ActivityRootBinding by viewBinding(ActivityRootBinding::inflate)
     private val vbBottombar
         get() = vb.bottombar.binding
     private val vbSubmenu
@@ -31,8 +31,8 @@ class RootActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        vb = ActivityRootBinding.inflate(layoutInflater)
-        setContentView(vb.root)
+        //vb = ActivityRootBinding.inflate(layoutInflater)
+        //setContentView(vb.root) 39 37
 
         setupToolbar()
         setupBottombar()
