@@ -72,7 +72,7 @@ object NetworkDataHolder {
     val content = MutableLiveData<List<Any>?>(null)
     private var isDelay = true
 
-    fun loadArticleContent(articleId: String): LiveData<List<Any>?> {
+    fun loadArticleContent(articleId: String): LiveData<List<String>?> {
         GlobalScope.launch {
             if (isDelay) delay(1500)
             withContext(Dispatchers.Main){
@@ -80,7 +80,7 @@ object NetworkDataHolder {
             }
 
         }
-        return content
+        return content as LiveData<List<String>?>
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)

@@ -1,22 +1,29 @@
 package ru.skillbranch.skillarticles.viewmodels
 
+import android.os.Bundle
+import androidx.core.os.bundleOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import ru.skillbranch.skillarticles.data.ArticleData
 import ru.skillbranch.skillarticles.data.ArticlePersonalInfo
 import ru.skillbranch.skillarticles.data.repositories.ArticleRepository
+import ru.skillbranch.skillarticles.extensions.asMap
 import ru.skillbranch.skillarticles.extensions.data.toAppSettings
 import ru.skillbranch.skillarticles.extensions.data.toArticlePersonalInfo
 import ru.skillbranch.skillarticles.extensions.format
+import ru.skillbranch.skillarticles.extensions.indexesOf
 
-class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleState>(ArticleState()),
+class ArticleViewModel(private val articleId: String, savedStateHandle: SavedStateHandle) :
+    BaseViewModel<ArticleState>(ArticleState(), savedStateHandle),
     IArticleViewModel {
 
     private val repository = ArticleRepository
-    private val queryString = mutableLiveData("")
-    private val searchMode = mutableLiveData(false)
 
     init {
+        savedStateHandle.setSavedStateProvider("state") {
+            currentState.toBundle()
+        }
         // реализовать связывание получаемых данных с текущим стейтом в методах subscribeOnDataSource
         /*
           функция принимает источник данных и лямбда выражение обрабатывающее поступающие данные источника
@@ -35,20 +42,6 @@ class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleSta
                 poster = article.poster
             )
         }
-
-        /*subscribeOnDataSource(queryString) { query, state ->
-            query ?: return@subscribeOnDataSource null
-            state.copy(
-                searchQuery = query
-            )
-        }
-
-        subscribeOnDataSource(searchMode) { search, state ->
-            search ?: return@subscribeOnDataSource null
-            state.copy(
-                isSearch = search
-            )
-        }*/
 
         subscribeOnDataSource(getArticleContent()) { content, state ->
             content ?: return@subscribeOnDataSource null
@@ -74,7 +67,7 @@ class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleSta
         }
     }
 
-    override fun getArticleContent(): LiveData<List<Any>?> {
+    override fun getArticleContent(): LiveData<List<String>?> {
         return repository.loadArticleContent(articleId)
     }
 
@@ -130,12 +123,25 @@ class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleSta
 
     override fun handleSearchMode(isSearch: Boolean) {
         //searchMode.value = isSearch
-        updateState { it.copy(isSearch = isSearch) }
+        updateState { it.copy(isSearch = isSearch, isShowMenu = false, searchPosition = 0) }
     }
 
     override fun handleSearch(query: String?) {
         //queryString.value = query
-        updateState { it.copy(searchQuery = query) }
+        query ?: return
+
+        val result = currentState.content.firstOrNull().indexesOf(query)
+            .map { it to it + query.length }
+
+        updateState { it.copy(searchQuery = query, searchResults = result) }
+    }
+
+    override fun handleUpResult() {
+        updateState { it.copy(searchPosition = it.searchPosition.dec()) }
+    }
+
+    override fun handleDownResult() {
+        updateState { it.copy(searchPosition = it.searchPosition.inc()) }
     }
 
     override fun handleUpText() {
@@ -175,15 +181,71 @@ data class ArticleState(
     val date: String? = null, // Дата публикации
     val author: Any? = null, // Автор статьи
     val poster: String? = null, // Обложка статьи
-    val content: List<Any> = emptyList(), // Контент
+    val content: List<String> = emptyList(), // Контент
     val reviews: List<Any> = emptyList() // Комментарий
+) : VMState {
+    override fun toBundle(): Bundle {
+        val map = copy(content = emptyList(), isLoadingContent = true)
+            .asMap()
+            .toList()
+            .toTypedArray()
+
+        return bundleOf(*map)
+    }
+
+    override fun fromBundle(bundle: Bundle): VMState {
+        val map = bundle.keySet().associateWith { bundle[it] }
+        return copy(
+            isAuth = map["isAuth"] as Boolean,
+            isLoadingContent = map["isLoadingContent"] as Boolean,
+            isLoadingReviews = map["isLoadingReviews"] as Boolean,
+            isLike = map["isLike"] as Boolean,
+            isBookmark = map["isBookmark"] as Boolean,
+            isShowMenu = map["isShowMenu"] as Boolean,
+            isBigText = map["isBigText"] as Boolean,
+            isDarkMode = map["isDarkMode"] as Boolean,
+            isSearch = map["isSearch"] as Boolean,
+            searchQuery = map["searchQuery"] as String,
+            searchResults = map["searchResults"] as List<Pair<Int, Int>>,
+            searchPosition = map["searchPosition"] as Int,
+            shareLink = map["shareLink"] as String,
+            title = map["title"] as String,
+            category = map["category"] as String,
+            categoryIcon = map["categoryIcon"] as Any,
+            date = map["date"] as String,
+            author = map["author"] as Any,
+            poster = map["poster"] as String,
+            content = map["content"] as List<String>,
+            reviews = map["reviews"] as List<Any>
+        )
+    }
+}
+
+data class BottombarData(
+    val isLike: Boolean = false,
+    val isBookmark: Boolean = false,
+    val isShowMenu: Boolean = false,
+    val isSearch: Boolean = false,
+    val resultsCount: Int = 0,
+    val searchPosition: Int = 0
 )
+
+data class SubmenuData(
+    val isShowMenu: Boolean = false,
+    val isBigText: Boolean = false,
+    val isDarkMode: Boolean = false
+)
+
+fun ArticleState.toBottombarData() =
+    BottombarData(isLike, isBookmark, isShowMenu, isSearch, searchResults.size, searchPosition)
+
+fun ArticleState.toSubmenuData() = SubmenuData(isShowMenu, isBigText, isDarkMode)
 
 fun <T> mutableLiveData(defaultValue: T? = null): MutableLiveData<T> {
     val data = MutableLiveData<T>()
 
     if (defaultValue != null)
-        data.value = defaultValue
+        data.value = defaultValue!!
 
     return data
 }
