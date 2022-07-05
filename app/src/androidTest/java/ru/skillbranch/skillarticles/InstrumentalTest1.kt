@@ -1,8 +1,10 @@
 package ru.skillbranch.skillarticles
 
 import android.text.Spannable
+import android.util.Log
 import android.view.View
 import android.widget.TextView
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.Toolbar
 import androidx.core.text.getSpans
@@ -21,6 +23,7 @@ import androidx.test.runner.lifecycle.Stage
 import com.jraska.livedata.TestObserver
 import com.jraska.livedata.test
 import io.mockk.*
+import io.mockk.impl.annotations.MockK
 import org.hamcrest.CoreMatchers.*
 import org.hamcrest.Description
 import org.hamcrest.Matcher
@@ -100,6 +103,7 @@ class InstrumentedTest1 {
 
     @Test(timeout = 30000)
     fun module3() {
+        @MockK
         val mockVm = mockk<ArticleViewModel>(relaxed = true, relaxUnitFun = true) {
             every { currentState } returns ArticleState()
         }
@@ -132,6 +136,7 @@ class InstrumentedTest1 {
         val mockVm = mockk<ArticleViewModel>(relaxed = true, relaxUnitFun = true) {
             every { currentState } returns ArticleState()
         }
+
 
         ActivityLifecycleMonitorRegistry.getInstance().addLifecycleCallback { activity, stage ->
             if (stage == Stage.PRE_ON_CREATE) {
@@ -267,6 +272,7 @@ class InstrumentedTest1 {
 
         vm.handleSearch("lorem")
 
+        Log.d("M_InstrumentalTest1", vm.state.value.toString())
         testObs
             .assertValue(
                 "handleSearch",

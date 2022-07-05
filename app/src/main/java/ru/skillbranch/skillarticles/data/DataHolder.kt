@@ -72,6 +72,7 @@ object NetworkDataHolder {
     val content = MutableLiveData<List<Any>?>(null)
     private var isDelay = true
 
+    @Suppress("UNCHECKED_CAST")
     fun loadArticleContent(articleId: String): LiveData<List<String>?> {
         GlobalScope.launch {
             if (isDelay) delay(1500)

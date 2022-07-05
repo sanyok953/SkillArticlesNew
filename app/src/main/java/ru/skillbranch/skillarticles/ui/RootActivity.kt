@@ -13,9 +13,11 @@ import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.viewModels
+import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
 import androidx.core.text.getSpans
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.databinding.ActivityRootBinding
@@ -30,6 +32,8 @@ import ru.skillbranch.skillarticles.viewmodels.*
 class RootActivity : AppCompatActivity(), IArticleView {
 
 
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    var viewModelFactory: ViewModelProvider.Factory = ViewModelFactory(this, "0")
     private val viewModel: ArticleViewModel by viewModels { ViewModelFactory(this, "0") }
     private val vb: ActivityRootBinding by viewBinding(ActivityRootBinding::inflate)
 
@@ -42,8 +46,11 @@ class RootActivity : AppCompatActivity(), IArticleView {
 
     private lateinit var searchView: SearchView
 
-    private val bgColor by AttrValue(com.google.android.material.R.attr.colorSecondary)
-    private val fgColor by AttrValue(com.google.android.material.R.attr.colorOnSecondary)
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    val bgColor by AttrValue(com.google.android.material.R.attr.colorSecondary)
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    val fgColor by AttrValue(com.google.android.material.R.attr.colorOnSecondary)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
