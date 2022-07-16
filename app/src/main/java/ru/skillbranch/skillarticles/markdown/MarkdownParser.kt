@@ -11,8 +11,11 @@ object MarkdownParser { // Парсер markdown разметки
     private const val QUOTE_GROUP = "(^> .+?$)"
     private const val ITALIC_GROUP = "((?<!\\*)\\*[^*].*?[^*]?\\*(?!\\*)|(?<!_)_[^_].*?[^_]?_(?!_))" // Ищем * после неё второй символ не * далее любое количество символов lazy которые заканчиваются не * и последняя звездочка
     // перед этим ретроспективная проверка что нет * вначала и нет * в конце и опережающая проверка что нет * в конце
+    private const val BOLD_GROUP = "((?<!\\*)\\*{2}[^*].*?[^*]?\\*{2}(?!\\*)|(?<!_)_{2}[^_].*?[^_]?_{2}(?!_))"
+    private const val STRIKE_GROUP = "()"
+    //private const val STRIKE_GROUP = ""
 
-    private const val MARKDOWN_GROUPS = "$UNORDERED_LIST_ITEM_GROUP|$HEADER_GROUP|$QUOTE_GROUP|$ITALIC_GROUP" // Строка содержащая все группы
+    private const val MARKDOWN_GROUPS = "$UNORDERED_LIST_ITEM_GROUP|$HEADER_GROUP|$QUOTE_GROUP|$ITALIC_GROUP|$BOLD_GROUP|$STRIKE_GROUP" // Строка содержащая все группы
 
     // Элемент паттерн проинициализирован как Pattern.compile с флагом мультилайн
     private val elementsPattern by lazy { Pattern.compile(MARKDOWN_GROUPS, Pattern.MULTILINE) }
@@ -48,7 +51,7 @@ object MarkdownParser { // Парсер markdown разметки
             // Found text
             var text: CharSequence
 
-            val groups = 1..4
+            val groups = 1..6
             var group = -1
             // Вспомогательный цикл для того чтобы итерироваться по группам, каждое выражение будет группа
             // Итерируемся по результатам которые найдёт наш матчер и определим какую группу он нашел
@@ -98,6 +101,20 @@ object MarkdownParser { // Парсер markdown разметки
                     parents.add(element)
                     lastSrartIndex = endIndex
                 }
+                5 -> { // BOLD
+                    text = string.subSequence(startIndex.plus(2), endIndex.plus(-2))
+                    val subelements = findElements(text)
+                    val element = Element.Bold(text, subelements)
+                    parents.add(element)
+                    lastSrartIndex = endIndex
+                }
+                /*6 -> { // STRIKE "~~{}~~"
+                    text = string.subSequence(startIndex.plus(2), endIndex.plus(-2))
+                    val subelements = findElements(text)
+                    val element = Element.Strike(text, subelements)
+                    parents.add(element)
+                    lastSrartIndex = endIndex
+                }*/
             }
         }
 
@@ -144,6 +161,16 @@ sealed class Element() { // Элемент markdown разметки
     ): Element()
 
     data class Italic( // Наклонный текст
+        override val text: CharSequence,
+        override val elements: List<Element> = emptyList()
+    ) : Element()
+
+    data class Bold( // Жирный текст
+        override val text: CharSequence,
+        override val elements: List<Element> = emptyList()
+    ) : Element()
+
+    data class Strike( //
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
     ) : Element()

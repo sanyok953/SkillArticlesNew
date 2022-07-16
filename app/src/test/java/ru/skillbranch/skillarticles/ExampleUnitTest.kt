@@ -48,12 +48,47 @@ class ExampleUnitTest {
         val result = MarkdownParser.parse(italicString)
         val actual = prepare<Element.Italic>(result.elements)
         assertEquals(expectedItalic, actual)
+    }
 
-        printResults(actual)
-        print("")
+
+
+    @Test
+    fun parse_bold() {
+        val result = MarkdownParser.parse(boldString)
+        val actual = prepare<Element.Bold>(result.elements)
+        assertEquals(expectedBold, actual)
+
+    }
+
+    @Test
+    fun parse_strike() {
+        val result = MarkdownParser.parse(strikeString)
+        val actual = prepare<Element.Strike>(result.elements)
+        assertEquals(expectedStrike, actual)
+    }
+
+
+    @Test
+    fun parse_combine() {
+        val result = MarkdownParser.parse(combineEmphasisString)
+        val actualItalic= prepare<Element.Italic>(result.elements)
+        val actualBold= prepare<Element.Bold>(result.elements)
+        //val actualStrike= prepare<Element.Strike>(result.elements)
+        assertEquals(expectedCombine["italic"], actualItalic)
+        assertEquals(expectedCombine["bold"], actualBold)
+        //assertEquals(expectedCombine["strike"], actualStrike)
+
+        printResults(actualItalic) // 1 20 45
+        printResults(actualBold)
+        //printResults(actualStrike)
+        print(" -*- ")
         printElements(result.elements)
     }
+
 /*
+
+
+
     @Test
     fun parse_ordered_list_item() {
         val result = MarkdownParser.parse(orderedListString)
@@ -63,40 +98,11 @@ class ExampleUnitTest {
             .map { it.order }
         assertEquals(listOf("1.", "2."), actualLevels)
         assertEquals(expectedOrderedList, actualOrderedList)
+
     }
 
 
 
-
-
-
-    @Test
-    @Ignore
-    fun parse_bold() {
-        val result = MarkdownParser.parse(boldString)
-        val actual = prepare<Element.Bold>(result.elements)
-        assertEquals(expectedBold, actual)
-    }
-
-    @Test
-    @Ignore
-    fun parse_strike() {
-        val result = MarkdownParser.parse(strikeString)
-        val actual = prepare<Element.Strike>(result.elements)
-        assertEquals(expectedStrike, actual)
-    }
-
-    @Test
-    @Ignore
-    fun parse_combine() {
-        val result = MarkdownParser.parse(combineEmphasisString)
-        val actualItalic= prepare<Element.Italic>(result.elements)
-        val actualBold= prepare<Element.Bold>(result.elements)
-        val actualStrike= prepare<Element.Strike>(result.elements)
-        assertEquals(expectedCombine["italic"], actualItalic)
-        assertEquals(expectedCombine["bold"], actualBold)
-        assertEquals(expectedCombine["strike"], actualStrike)
-    }
 
     @Test
     @Ignore
