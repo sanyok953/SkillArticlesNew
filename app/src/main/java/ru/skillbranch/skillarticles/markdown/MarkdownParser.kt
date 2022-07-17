@@ -1,5 +1,6 @@
 package ru.skillbranch.skillarticles.markdown
 
+import android.util.Log
 import java.util.regex.Pattern
 
 object MarkdownParser { // Парсер markdown разметки
@@ -9,13 +10,26 @@ object MarkdownParser { // Парсер markdown разметки
     private const val UNORDERED_LIST_ITEM_GROUP = "(^[*+-] .+$)" // Регулярное выражение ненумерованного списка
     private const val HEADER_GROUP = "(^#{1,6} .+?$)"
     private const val QUOTE_GROUP = "(^> .+?$)"
-    private const val ITALIC_GROUP = "((?<!\\*)\\*[^*].*?[^*]?\\*(?!\\*)|(?<!_)_[^_].*?[^_]?_(?!_))" // Ищем * после неё второй символ не * далее любое количество символов lazy которые заканчиваются не * и последняя звездочка
+    private const val ITALIC_GROUP = "((?<!\\*)\\*[^*].*?[^*]?\\*(?!\\*)|(?<!_)_[^_].*?[^_]?_(?!_))"
+    // Ищем * после неё второй символ не * далее любое количество символов lazy которые заканчиваются не * и последняя звездочка
     // перед этим ретроспективная проверка что нет * вначала и нет * в конце и опережающая проверка что нет * в конце
     private const val BOLD_GROUP = "((?<!\\*)\\*{2}[^*].*?[^*]?\\*{2}(?!\\*)|(?<!_)_{2}[^_].*?[^_]?_{2}(?!_))"
-    private const val STRIKE_GROUP = "()"
-    //private const val STRIKE_GROUP = ""
+    private const val STRIKE_GROUP = "((?<!~)~{2}.+~{2}(?!~))"
+    private const val RULE_GROUP = "(^[-_*]{3}$)"
+    private const val INLINE_GROUP = "((?<!`)`[^`\\s].*?[^`\\s]?`(?!`))"
+    private const val LINK_GROUP = "(\\[[^\\[\\]]*?]\\(.+?\\)|^\\[*?]\\(.*?\\))"
+    // Экранированная квадратная скобка, любой символ не являющийся квадратной скобкой (открб закр),
+    // Любой символ который может быть или не быть, квадратная скобка, откр обычн скобка,
+    // Любой символ который может быть или не быть (lazy), закрывающая скобка или начало строки открывающая скобка,
+    // Любые символы, закрывающая скобка, открывающая скобка, любой символ, закрывающаяся скобка
+    private const val ORDERED_LIST_ITEM_GROUP = "(^\\d+?\\. .+$)" // Регулярное выражение ненумерованного списка
 
-    private const val MARKDOWN_GROUPS = "$UNORDERED_LIST_ITEM_GROUP|$HEADER_GROUP|$QUOTE_GROUP|$ITALIC_GROUP|$BOLD_GROUP|$STRIKE_GROUP" // Строка содержащая все группы
+    private const val MULTILINE_GROUP = "(^(?<!`)`{3}[^`\\s][\\w\\s\\n\\.]*?[^`\\s]?`{3}(?!`)$)"
+
+
+    private const val MARKDOWN_GROUPS = "$UNORDERED_LIST_ITEM_GROUP|$HEADER_GROUP|$QUOTE_GROUP|$ITALIC_GROUP" +
+            "|$BOLD_GROUP|$STRIKE_GROUP|$RULE_GROUP|$INLINE_GROUP|$LINK_GROUP|$ORDERED_LIST_ITEM_GROUP" +
+            "|$MULTILINE_GROUP" // Строка содержащая все группы
 
     // Элемент паттерн проинициализирован как Pattern.compile с флагом мультилайн
     private val elementsPattern by lazy { Pattern.compile(MARKDOWN_GROUPS, Pattern.MULTILINE) }
@@ -51,7 +65,7 @@ object MarkdownParser { // Парсер markdown разметки
             // Found text
             var text: CharSequence
 
-            val groups = 1..6
+            val groups = 1..11
             var group = -1
             // Вспомогательный цикл для того чтобы итерироваться по группам, каждое выражение будет группа
             // Итерируемся по результатам которые найдёт наш матчер и определим какую группу он нашел
@@ -108,13 +122,56 @@ object MarkdownParser { // Парсер markdown разметки
                     parents.add(element)
                     lastSrartIndex = endIndex
                 }
-                /*6 -> { // STRIKE "~~{}~~"
+                6 -> { // STRIKE "~~{}~~"
                     text = string.subSequence(startIndex.plus(2), endIndex.plus(-2))
                     val subelements = findElements(text)
                     val element = Element.Strike(text, subelements)
                     parents.add(element)
                     lastSrartIndex = endIndex
-                }*/
+                }
+                7 -> { // RULE text without *** insert empty character
+                    val element = Element.Rule()
+                    parents.add(element)
+                    lastSrartIndex = endIndex
+                }
+                8 -> { // INLINE `{}`
+                    text = string.subSequence(startIndex.inc(), endIndex.dec())
+                    val element = Element.InlineCode(text)
+                    parents.add(element)
+                    lastSrartIndex = endIndex
+                }
+                9 -> { // LINK full text for regex
+                    text = string.subSequence(startIndex, endIndex)
+                    // Выделяем группы внутри наших поисковых символов, выделена группа внутри квадратных
+                    // скобок и выделена группа внутри круглых скобок, превратится в регулярное выражение,
+                    // ищем по строке, !! знаем что строка не будет пустая, destructured возвращаем
+                    // значение деструктируемое в коллекцию
+                    val (title: String, link: String) = "\\[(.*)]\\((.*)\\)".toRegex().find(text)!!.destructured // Результаты поиска деструктурируем по группам
+                    val element = Element.Link(link, title)
+                    parents.add(element)
+                    lastSrartIndex = endIndex
+                }
+                10 -> { // ORDERED_LIST
+                    text = string.subSequence(startIndex, endIndex)
+                    val (order, text) = "(\\d+?\\.) (.+)".toRegex().find(text)!!.destructured
+                    val element = Element.OrderedListItem(order, text)
+                    parents.add(element) // После, добавляем созданный элемент
+
+                    // Присваиваем значение которое соответствует концу регулярного выражения. Чтобы не искать ещё раз в этом месте
+                    lastSrartIndex = endIndex
+
+                }
+                11 -> { // MULTILINE CODE
+                    text = string.subSequence(startIndex.plus(3), endIndex.plus(-3))
+                    //val prepare = "\\w[\n]\\w".toRegex().find(text)
+                    //println("PREPARE $prepare")
+                    val element = Element.BlockCode(text)
+                    parents.add(element) // После, добавляем созданный элемент
+
+                    // Присваиваем значение которое соответствует концу регулярного выражения. Чтобы не искать ещё раз в этом месте
+                    lastSrartIndex = endIndex
+
+                }
             }
         }
 
@@ -174,4 +231,40 @@ sealed class Element() { // Элемент markdown разметки
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
     ) : Element()
+
+    data class InlineCode( //
+        override val text: CharSequence,
+        override val elements: List<Element> = emptyList()
+    ) : Element()
+
+    data class Link( //
+        val link: String,
+        override val text: CharSequence,
+        override val elements: List<Element> = emptyList()
+    ) : Element()
+
+    data class Rule( //
+        override val text: CharSequence = " ", // For insert span
+        override val elements: List<Element> = emptyList()
+    ) : Element()
+
+    data class OrderedListItem(
+        val order: String,
+        override val text: CharSequence,
+        override val elements: List<Element> = emptyList()
+    ) : Element()
+
+    data class BlockCode(
+        override val text: CharSequence,
+        override val elements: List<Element> = emptyList()
+    ) : Element()
+
+    data class Image(
+        val url: String,
+        val alt: String?,
+        override val text: CharSequence,
+        override val elements: List<Element> = emptyList()
+    ) : Element()
+
+
 }

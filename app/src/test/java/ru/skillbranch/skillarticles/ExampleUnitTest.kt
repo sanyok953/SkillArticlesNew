@@ -17,6 +17,7 @@ class ExampleUnitTest {
     @Test
     fun parse_list_item() { // Парсим ненумерованный список
         val result = MarkdownParser.parse(unorderedListString)
+        printElements(result.elements)
         val actual = prepare<Element.UnorderedListItem>(result.elements)
         assertEquals(expectedUnorderedList, actual)
 
@@ -29,9 +30,9 @@ class ExampleUnitTest {
         // Проверка правильно ли определён level
         val actualLevels = result.elements.spread()
             .filterIsInstance<Element.Header>()
-            .map{it.level}
+            .map { it.level }
         assertEquals(expectedHeader, actual)
-        assertEquals(listOf(1,2,3,4,5,6), actualLevels)
+        assertEquals(listOf(1, 2, 3, 4, 5, 6), actualLevels)
 
     }
 
@@ -49,7 +50,6 @@ class ExampleUnitTest {
         val actual = prepare<Element.Italic>(result.elements)
         assertEquals(expectedItalic, actual)
     }
-
 
 
     @Test
@@ -71,22 +71,47 @@ class ExampleUnitTest {
     @Test
     fun parse_combine() {
         val result = MarkdownParser.parse(combineEmphasisString)
-        val actualItalic= prepare<Element.Italic>(result.elements)
-        val actualBold= prepare<Element.Bold>(result.elements)
-        //val actualStrike= prepare<Element.Strike>(result.elements)
+        val actualItalic = prepare<Element.Italic>(result.elements)
+        val actualBold = prepare<Element.Bold>(result.elements)
+        val actualStrike= prepare<Element.Strike>(result.elements)
         assertEquals(expectedCombine["italic"], actualItalic)
         assertEquals(expectedCombine["bold"], actualBold)
-        //assertEquals(expectedCombine["strike"], actualStrike)
+        assertEquals(expectedCombine["strike"], actualStrike)
 
-        printResults(actualItalic) // 1 20 45
+        /*printResults(actualItalic)
         printResults(actualBold)
-        //printResults(actualStrike)
+        printResults(actualStrike)
         print(" -*- ")
-        printElements(result.elements)
+        printElements(result.elements)*/
     }
 
-/*
 
+    @Test
+    fun parse_rule() {
+        val result = MarkdownParser.parse(ruleString)
+        val actual = prepare<Element.Rule>(result.elements)
+        assertEquals(3, actual.size)
+    }
+
+
+    @Test
+    fun parse_inline_code() {
+        val result = MarkdownParser.parse(inlineString)
+        val actual = prepare<Element.InlineCode>(result.elements)
+        assertEquals(expectedInline, actual)
+    }
+
+    @Test
+    fun parse_link() {
+        val result = MarkdownParser.parse(linkString)
+        val actual = prepare<Element.Link>(result.elements)
+        val actualLink = result.elements.spread()
+            .filterIsInstance<Element.Link>()
+            .map{it.link}
+
+        assertEquals(expectedLink["titles"], actual)
+        assertEquals(expectedLink["links"], actualLink)
+    }
 
 
     @Test
@@ -102,44 +127,55 @@ class ExampleUnitTest {
     }
 
 
-
-
     @Test
-    @Ignore
-    fun parse_rule() {
-        val result = MarkdownParser.parse(ruleString)
-        val actual = prepare<Element.Rule>(result.elements)
-        assertEquals(3, actual.size)
-    }
-
-    @Test
-    @Ignore
-    fun parse_inline_code() {
-        val result = MarkdownParser.parse(inlineString)
-        val actual = prepare<Element.InlineCode>(result.elements)
-        assertEquals(expectedInline, actual)
-    }
-
-    @Test
-    @Ignore
     fun parse_multiline_code() {
         val result = MarkdownParser.parse(multilineCode)
         val actual = prepare<Element.BlockCode>(result.elements) //optionally
         assertEquals(expectedMultilineCode, actual) //optionally
+
+        printResults(actual)
+        print(" -*- ")
+        printElements(result.elements)
     }
 
     @Test
-    @Ignore
-    fun parse_link() {
-        val result = MarkdownParser.parse(linkString)
-        val actual = prepare<Element.Link>(result.elements)
-        val actualLink = result.elements.spread()
+    fun parse_all() {
+        val result = MarkdownParser.parse(markdownString)
+        val actualUnorderedList = prepare<Element.UnorderedListItem>(result.elements)
+        val actualHeaders = prepare<Element.Header>(result.elements)
+        val actualQuotes = prepare<Element.Quote>(result.elements)
+        val actualItalic = prepare<Element.Italic>(result.elements)
+        val actualBold = prepare<Element.Bold>(result.elements)
+        val actualStrike = prepare<Element.Strike>(result.elements)
+        val actualRule = prepare<Element.Rule>(result.elements)
+        val actualInline = prepare<Element.InlineCode>(result.elements)
+        val actualLinkTitles = prepare<Element.Link>(result.elements)
+        val actualLinks = result.elements.spread()
             .filterIsInstance<Element.Link>()
-            .map{it.link}
+            .map { it.link }
+        val actualBlockCode = prepare<Element.BlockCode>(result.elements)
+        val actualOrderedList = prepare<Element.OrderedListItem>(result.elements)
 
-        assertEquals(expectedLink["titles"], actual)
-        assertEquals(expectedLink["links"], actualLink)
+        assertEquals(expectedMarkdown["unorderedList"], actualUnorderedList)
+        assertEquals(expectedMarkdown["header"], actualHeaders)
+        assertEquals(expectedMarkdown["quote"], actualQuotes)
+        assertEquals(expectedMarkdown["italic"], actualItalic)
+        assertEquals(expectedMarkdown["bold"], actualBold)
+        assertEquals(expectedMarkdown["strike"], actualStrike)
+        assertEquals(3, actualRule.size)
+        assertEquals(expectedMarkdown["inline"], actualInline)
+        assertEquals(expectedMarkdown["linkTitles"], actualLinkTitles)
+        assertEquals(expectedMarkdown["links"], actualLinks)
+        assertEquals(expectedMarkdown["multiline"], actualBlockCode)
+        assertEquals(expectedMarkdown["orderedList"], actualOrderedList)
     }
+
+/*
+
+
+
+
+
 
     @Test
     @Ignore
@@ -157,35 +193,6 @@ class ExampleUnitTest {
         assertEquals(expectedImages["titles"], actual)
         assertEquals(expectedImages["alts"], actualAlts)
         assertEquals(expectedImages["links"], actualLink)
-    }
-
-    @Test
-    @Ignore
-    fun parse_all() {
-        val result = MarkdownParser.parse(markdownString)
-        val actualUnorderedList = prepare<Element.UnorderedListItem>(result.elements)
-        val actualHeaders = prepare<Element.Header>(result.elements)
-        val actualQuotes = prepare<Element.Quote>(result.elements)
-        val actualItalic = prepare<Element.Italic>(result.elements)
-        val actualBold = prepare<Element.Bold>(result.elements)
-        val actualStrike = prepare<Element.Strike>(result.elements)
-        val actualRule = prepare<Element.Rule>(result.elements)
-        val actualInline = prepare<Element.InlineCode>(result.elements)
-        val actualLinkTitles = prepare<Element.Link>(result.elements)
-        val actualLinks = result.elements.spread()
-            .filterIsInstance<Element.Link>()
-            .map { it.link }
-
-        assertEquals(expectedMarkdown["unorderedList"], actualUnorderedList)
-        assertEquals(expectedMarkdown["header"], actualHeaders)
-        assertEquals(expectedMarkdown["quote"], actualQuotes)
-        assertEquals(expectedMarkdown["italic"], actualItalic)
-        assertEquals(expectedMarkdown["bold"], actualBold)
-        assertEquals(expectedMarkdown["strike"], actualStrike)
-        assertEquals(3, actualRule.size)
-        assertEquals(expectedMarkdown["inline"], actualInline)
-        assertEquals(expectedMarkdown["linkTitles"], actualLinkTitles)
-        assertEquals(expectedMarkdown["links"], actualLinks)
     }
 
     @Test
@@ -239,22 +246,22 @@ class ExampleUnitTest {
 
 */
 
-    private fun printResults(list:List<String>){
+    private fun printResults(list: List<String>) {
         val iterator = list.iterator()
-        while (iterator.hasNext()){
+        while (iterator.hasNext()) {
             println("find >> ${iterator.next()}")
         }
     }
 
-    private fun printElements(list:List<Element>){
+    private fun printElements(list: List<Element>) {
         val iterator = list.iterator()
-        while (iterator.hasNext()){
+        while (iterator.hasNext()) {
             println("element >> ${iterator.next()}")
         }
     }
 
 
-    private fun Element.spread():List<Element>{ // Для одного элемента
+    private fun Element.spread(): List<Element> { // Для одного элемента
         val elements = mutableListOf<Element>()
         elements.add(this)
         elements.addAll(this.elements.spread())
@@ -262,22 +269,22 @@ class ExampleUnitTest {
     }
 
     // Позволяем взять элемент и развернуть его дочерние элементы (превратить в последовательность из элементов
-    private fun List<Element>.spread():List<Element>{
+    private fun List<Element>.spread(): List<Element> {
         val elements = mutableListOf<Element>()
-        if(this.isNotEmpty()) elements.addAll( // Если список не пустой
+        if (this.isNotEmpty()) elements.addAll( // Если список не пустой
             // Добавляем все элементы которые которые развернём с помощью функции fold
             // Первый аргумент аккумулятор вторым наш элемент
             // В каждой итерации добавляем в аккумулятор наш эленент который будет развернут при помощи spread
-            this.fold(mutableListOf()){acc, el -> acc.also { it.addAll(el.spread()) }}
+            this.fold(mutableListOf()) { acc, el -> acc.also { it.addAll(el.spread()) } }
         )
         return elements
     }
 
     // Передаём коллекцию элементов и она будет возвращать коллекцию стрингов
-    private inline fun <reified T:Element> prepare(list:List<Element>) : List<String>{ // Дженерик вещественного типа
+    private inline fun <reified T : Element> prepare(list: List<Element>): List<String> { // Дженерик вещественного типа
         // Нужно для удобства, сравнить ожидаемые результаты с фактическими
         return list
-            .fold(mutableListOf<Element>()){ acc, el -> //spread inner elements. в качестве аккумулятора пкстая коллекция
+            .fold(mutableListOf<Element>()) { acc, el -> //spread inner elements. в качестве аккумулятора пкстая коллекция
                 // Будет в пустую коллекцию добавлять последовательно наши элементы к которым мы применяем spread
                 acc.also { it.addAll(el.spread()) }
             }
