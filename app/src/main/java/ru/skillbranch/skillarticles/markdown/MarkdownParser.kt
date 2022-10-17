@@ -26,10 +26,12 @@ object MarkdownParser { // Парсер markdown разметки
 
     private const val MULTILINE_GROUP = "(^(?<!`)`{3}[^`\\s][\\w\\s\\n\\.]*?[^`\\s]?`{3}(?!`)$)"
 
+    private const val IMAGE_GROUP = "(!\\[.*][(]{1}\\S+\\s?(\"{1}.+\"{1})?\\))"
+
 
     private const val MARKDOWN_GROUPS = "$UNORDERED_LIST_ITEM_GROUP|$HEADER_GROUP|$QUOTE_GROUP|$ITALIC_GROUP" +
             "|$BOLD_GROUP|$STRIKE_GROUP|$RULE_GROUP|$INLINE_GROUP|$LINK_GROUP|$ORDERED_LIST_ITEM_GROUP" +
-            "|$MULTILINE_GROUP" // Строка содержащая все группы
+            "|$MULTILINE_GROUP|$IMAGE_GROUP" // Строка содержащая все группы
 
     // Элемент паттерн проинициализирован как Pattern.compile с флагом мультилайн
     private val elementsPattern by lazy { Pattern.compile(MARKDOWN_GROUPS, Pattern.MULTILINE) }
@@ -43,8 +45,10 @@ object MarkdownParser { // Парсер markdown разметки
 
     fun clear(string: String): String? { // Из строки которая содержит маркдаун превращает её в обычную строку без маркдаун символов
         // Нужно чтобы делать поиск по тексту
-        return null
+        val text = parse(string)
+        return text.elements.spreadText()
     }
+
 
     // Их строки будет парсить элементы и возвращать их
     private fun findElements(string: CharSequence): List<Element> {
@@ -65,7 +69,7 @@ object MarkdownParser { // Парсер markdown разметки
             // Found text
             var text: CharSequence
 
-            val groups = 1..11
+            val groups = 1..12
             var group = -1
             // Вспомогательный цикл для того чтобы итерироваться по группам, каждое выражение будет группа
             // Итерируемся по результатам которые найдёт наш матчер и определим какую группу он нашел
@@ -87,9 +91,6 @@ object MarkdownParser { // Парсер markdown разметки
                     // (Второй элемент unordered list item)
                     val element = Element.UnorderedListItem(text, subs)
                     parents.add(element) // После, добавляем созданный элемент
-
-                    // Присваиваем значение которое соответствует концу регулярного выражения. Чтобы не искать ещё раз в этом месте
-                    lastSrartIndex = endIndex
                 }
                 2 -> { // HEADER
                     // Находим символы решётки
@@ -99,46 +100,39 @@ object MarkdownParser { // Парсер markdown разметки
                     text = string.subSequence(startIndex.plus(level.inc()), endIndex)
                     val element = Element.Header(level, text)
                     parents.add(element)
-                    lastSrartIndex = endIndex
                 }
                 3 -> { // QUOTE
                     text = string.subSequence(startIndex.plus(2), endIndex)
                     val subelements = findElements(text)
                     val element = Element.Quote(text, subelements)
                     parents.add(element)
-                    lastSrartIndex = endIndex
                 }
                 4 -> { // ITALIC
                     text = string.subSequence(startIndex.inc(), endIndex.dec())
                     val subelements = findElements(text)
                     val element = Element.Italic(text, subelements)
                     parents.add(element)
-                    lastSrartIndex = endIndex
                 }
                 5 -> { // BOLD
                     text = string.subSequence(startIndex.plus(2), endIndex.plus(-2))
                     val subelements = findElements(text)
                     val element = Element.Bold(text, subelements)
                     parents.add(element)
-                    lastSrartIndex = endIndex
                 }
                 6 -> { // STRIKE "~~{}~~"
                     text = string.subSequence(startIndex.plus(2), endIndex.plus(-2))
                     val subelements = findElements(text)
                     val element = Element.Strike(text, subelements)
                     parents.add(element)
-                    lastSrartIndex = endIndex
                 }
                 7 -> { // RULE text without *** insert empty character
                     val element = Element.Rule()
                     parents.add(element)
-                    lastSrartIndex = endIndex
                 }
                 8 -> { // INLINE `{}`
                     text = string.subSequence(startIndex.inc(), endIndex.dec())
                     val element = Element.InlineCode(text)
                     parents.add(element)
-                    lastSrartIndex = endIndex
                 }
                 9 -> { // LINK full text for regex
                     text = string.subSequence(startIndex, endIndex)
@@ -149,16 +143,12 @@ object MarkdownParser { // Парсер markdown разметки
                     val (title: String, link: String) = "\\[(.*)]\\((.*)\\)".toRegex().find(text)!!.destructured // Результаты поиска деструктурируем по группам
                     val element = Element.Link(link, title)
                     parents.add(element)
-                    lastSrartIndex = endIndex
                 }
                 10 -> { // ORDERED_LIST
                     text = string.subSequence(startIndex, endIndex)
-                    val (order, text) = "(\\d+?\\.) (.+)".toRegex().find(text)!!.destructured
-                    val element = Element.OrderedListItem(order, text)
+                    val (order, txt) = "(\\d+?\\.) (.+)".toRegex().find(text)!!.destructured
+                    val element = Element.OrderedListItem(order, txt)
                     parents.add(element) // После, добавляем созданный элемент
-
-                    // Присваиваем значение которое соответствует концу регулярного выражения. Чтобы не искать ещё раз в этом месте
-                    lastSrartIndex = endIndex
 
                 }
                 11 -> { // MULTILINE CODE
@@ -168,11 +158,20 @@ object MarkdownParser { // Парсер markdown разметки
                     val element = Element.BlockCode(text)
                     parents.add(element) // После, добавляем созданный элемент
 
-                    // Присваиваем значение которое соответствует концу регулярного выражения. Чтобы не искать ещё раз в этом месте
-                    lastSrartIndex = endIndex
+                }
+                12 -> { // IMAGE
+                    text = string.subSequence(startIndex, endIndex)
+                    val (alt, link) = "!\\[(.*)]\\((\\S*).*\\)".toRegex().find(text)!!.destructured
+                    val title = if (text.matches("!\\[.*\\]\\(\\S* \".*\"\\)".toRegex()))
+                        "!\\[.*\\]\\(\\S* \"(.*)\"\\)".toRegex().find(text)!!.destructured.component1()
+                    else ""
 
+                    val element = Element.Image(link, if(alt.isEmpty()) null else alt, title)
+                    parents.add(element) // После, добавляем созданный элемент
                 }
             }
+            // Присваиваем значение которое соответствует концу регулярного выражения. Чтобы не искать ещё раз в этом месте
+            lastSrartIndex = endIndex
         }
 
         // Проверяем что находится после последнего вхождения
@@ -184,6 +183,26 @@ object MarkdownParser { // Парсер markdown разметки
 
 
         return parents
+    }
+
+
+    private fun Element.spreadText(): String {
+        val builder = StringBuilder()
+        if (elements.isNotEmpty()) {
+            builder.append(elements.spreadText())
+        } else {
+            builder.append(text)
+        }
+        return builder.toString()
+    }
+
+    private fun List<Element>.spreadText(): String {
+        val builder = StringBuilder()
+
+        if (this.isNotEmpty()) {
+            this.fold(builder) { acc, el -> acc.also { it.append(el.spreadText()) } }
+        }
+        return builder.toString()
     }
 }
 

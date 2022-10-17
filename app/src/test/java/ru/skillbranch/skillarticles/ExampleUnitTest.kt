@@ -23,8 +23,21 @@ class ExampleUnitTest {
 
     }
 
+
     @Test
-    fun parse_header() {
+    fun parse_ordered_list_item() { // Парсим упорядоченый список
+        val result = MarkdownParser.parse(orderedListString)
+        val actualOrderedList = prepare<Element.OrderedListItem>(result.elements)
+        val actualLevels = result.elements.spread()
+            .filterIsInstance<Element.OrderedListItem>()
+            .map { it.order }
+        assertEquals(listOf("1.", "2."), actualLevels)
+        assertEquals(expectedOrderedList, actualOrderedList)
+
+    }
+
+    @Test
+    fun parse_header() { // Парсим заголовки
         val result = MarkdownParser.parse(headerString)
         val actual = prepare<Element.Header>(result.elements)
         // Проверка правильно ли определён level
@@ -37,7 +50,7 @@ class ExampleUnitTest {
     }
 
     @Test
-    fun parse_quote() {
+    fun parse_quote() { // Парсим цитату
         val result = MarkdownParser.parse(quoteString)
         val actual = prepare<Element.Quote>(result.elements)
         assertEquals(expectedQuote, actual)
@@ -45,7 +58,7 @@ class ExampleUnitTest {
     }
 
     @Test
-    fun parse_italic() {
+    fun parse_italic() { // Парсим форматирование
         val result = MarkdownParser.parse(italicString)
         val actual = prepare<Element.Italic>(result.elements)
         assertEquals(expectedItalic, actual)
@@ -69,7 +82,7 @@ class ExampleUnitTest {
 
 
     @Test
-    fun parse_combine() {
+    fun parse_combine() { // Парсинг комбинированный из нескольких
         val result = MarkdownParser.parse(combineEmphasisString)
         val actualItalic = prepare<Element.Italic>(result.elements)
         val actualBold = prepare<Element.Bold>(result.elements)
@@ -87,7 +100,7 @@ class ExampleUnitTest {
 
 
     @Test
-    fun parse_rule() {
+    fun parse_rule() { // Парсим горизонтальный разделитель
         val result = MarkdownParser.parse(ruleString)
         val actual = prepare<Element.Rule>(result.elements)
         assertEquals(3, actual.size)
@@ -95,14 +108,26 @@ class ExampleUnitTest {
 
 
     @Test
-    fun parse_inline_code() {
+    fun parse_inline_code() { // Парсим инлайн
         val result = MarkdownParser.parse(inlineString)
         val actual = prepare<Element.InlineCode>(result.elements)
         assertEquals(expectedInline, actual)
     }
 
+
     @Test
-    fun parse_link() {
+    fun parse_multiline_code() { // Парсим многострочный код
+        val result = MarkdownParser.parse(multilineCode)
+        val actual = prepare<Element.BlockCode>(result.elements) //optionally
+        assertEquals(expectedMultilineCode, actual) //optionally
+
+        printResults(actual)
+        print(" -*- ")
+        printElements(result.elements)
+    }
+
+    @Test
+    fun parse_link() { // Парсим ссылки
         val result = MarkdownParser.parse(linkString)
         val actual = prepare<Element.Link>(result.elements)
         val actualLink = result.elements.spread()
@@ -113,29 +138,21 @@ class ExampleUnitTest {
         assertEquals(expectedLink["links"], actualLink)
     }
 
-
     @Test
-    fun parse_ordered_list_item() {
-        val result = MarkdownParser.parse(orderedListString)
-        val actualOrderedList = prepare<Element.OrderedListItem>(result.elements)
-        val actualLevels = result.elements.spread()
-            .filterIsInstance<Element.OrderedListItem>()
-            .map { it.order }
-        assertEquals(listOf("1.", "2."), actualLevels)
-        assertEquals(expectedOrderedList, actualOrderedList)
+    fun parse_images() {
+        val result = MarkdownParser.parse(imagesString)
+        val actual = prepare<Element.Image>(result.elements)
+        val actualLink = result.elements.spread()
+            .filterIsInstance<Element.Image>()
+            .map{it.url}
 
-    }
+        val actualAlts = result.elements.spread()
+            .filterIsInstance<Element.Image>()
+            .map{it.alt}
 
-
-    @Test
-    fun parse_multiline_code() {
-        val result = MarkdownParser.parse(multilineCode)
-        val actual = prepare<Element.BlockCode>(result.elements) //optionally
-        assertEquals(expectedMultilineCode, actual) //optionally
-
-        printResults(actual)
-        print(" -*- ")
-        printElements(result.elements)
+        assertEquals(expectedImages["titles"], actual)
+        assertEquals(expectedImages["alts"], actualAlts)
+        assertEquals(expectedImages["links"], actualLink)
     }
 
     @Test
@@ -166,37 +183,15 @@ class ExampleUnitTest {
         assertEquals(expectedMarkdown["inline"], actualInline)
         assertEquals(expectedMarkdown["linkTitles"], actualLinkTitles)
         assertEquals(expectedMarkdown["links"], actualLinks)
-        assertEquals(expectedMarkdown["multiline"], actualBlockCode)
-        assertEquals(expectedMarkdown["orderedList"], actualOrderedList)
+        //assertEquals(expectedMarkdown["multiline"], actualBlockCode)
+        //assertEquals(expectedMarkdown["orderedList"], actualOrderedList)
     }
-
-/*
-
 
 
 
 
 
     @Test
-    @Ignore
-    fun parse_images() {
-        val result = MarkdownParser.parse(imagesString)
-        val actual = prepare<Element.Image>(result.elements)
-        val actualLink = result.elements.spread()
-            .filterIsInstance<Element.Image>()
-            .map{it.url}
-
-        val actualAlts = result.elements.spread()
-            .filterIsInstance<Element.Image>()
-            .map{it.alt}
-
-        assertEquals(expectedImages["titles"], actual)
-        assertEquals(expectedImages["alts"], actualAlts)
-        assertEquals(expectedImages["links"], actualLink)
-    }
-
-    @Test
-    @Ignore
     fun clear_all() {
         val result = MarkdownParser.clear(markdownString)
         assertEquals(markdownClearString,  result)
@@ -204,7 +199,6 @@ class ExampleUnitTest {
 
 
     @Test
-    @Ignore
     fun clear_all_with_optionally() {
         val result = MarkdownParser.clear(markdownString)
         assertEquals(markdownOptionallyClearString,  result)
@@ -212,7 +206,6 @@ class ExampleUnitTest {
 
     //optionally (delete @Ignore fo run)
     @Test
-    @Ignore
     fun parse_all_with_optionally() {
         val result = MarkdownParser.parse(markdownString)
         val actualUnorderedList = prepare<Element.UnorderedListItem>(result.elements)
@@ -244,7 +237,9 @@ class ExampleUnitTest {
         assertEquals(expectedMarkdown["orderedList"], actualOrderedList)
     }
 
-*/
+
+
+
 
     private fun printResults(list: List<String>) {
         val iterator = list.iterator()
