@@ -5,12 +5,11 @@ import androidx.core.os.bundleOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
+import ru.skillbranch.skillarticles.data.AppSettings
 import ru.skillbranch.skillarticles.data.ArticleData
 import ru.skillbranch.skillarticles.data.ArticlePersonalInfo
 import ru.skillbranch.skillarticles.data.repositories.ArticleRepository
 import ru.skillbranch.skillarticles.extensions.asMap
-import ru.skillbranch.skillarticles.extensions.data.toAppSettings
-import ru.skillbranch.skillarticles.extensions.data.toArticlePersonalInfo
 import ru.skillbranch.skillarticles.extensions.format
 import ru.skillbranch.skillarticles.extensions.indexesOf
 
@@ -157,6 +156,16 @@ class ArticleViewModel(private val articleId: String, savedStateHandle: SavedSta
         val settings = currentState.toAppSettings() // Содержит 2 поля внутри себя
         repository.updateSettings(settings.copy(isDarkMode = !settings.isDarkMode)) // Вызывает у репозитория обновление и передаём туда необходимые состояния
         // и MediatorLiveData узнает что данные были изменены и изменится общее состояние и после изменится ui
+    }
+
+
+    // Функции расширения, для биндинга данных между нашими дата классами
+    fun ArticleState.toAppSettings(): AppSettings {
+        return AppSettings(isDarkMode, isBigText)
+    }
+
+    fun ArticleState.toArticlePersonalInfo(): ArticlePersonalInfo {
+        return ArticlePersonalInfo(isLike, isBookmark)
     }
 
 }
