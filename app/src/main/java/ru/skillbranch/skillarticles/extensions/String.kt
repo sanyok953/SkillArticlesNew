@@ -2,14 +2,21 @@ package ru.skillbranch.skillarticles.extensions
 
 import java.util.*
 
+@kotlin.ExperimentalStdlibApi
 fun String?.indexesOf(
-    substr: String,
+    subst: String,
     ignoreCase: Boolean = true
 ): List<Int> {
-    when {
-        this == null || substr.isEmpty() -> return listOf()
-        else -> return Regex(if (ignoreCase) substr.lowercase(Locale.getDefault()) else substr)
-            .findAll(if (ignoreCase) this.lowercase(Locale.getDefault()) else this)
+    return when {
+        this == null || subst.isEmpty() -> listOf()
+        else -> Regex(if (ignoreCase) subst.lowercase(Locale.getDefault()) else subst)
+            .findAll(
+                if (ignoreCase) {
+                    this.lowercase(Locale.getDefault())
+                } else {
+                    this
+                }
+            )
             .map { it.range.first }
             .toList()
     }
